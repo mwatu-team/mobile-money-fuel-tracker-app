@@ -134,7 +134,10 @@ private fun MessagesScreen(messages: List<LocalSmsMessage>, debugMode: Boolean) 
         items(messages, key = { it.id }) { message ->
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(maskPhone(message.customerPhone), fontWeight = FontWeight.Bold)
+                    Text(
+                        message.customerName ?: maskPhone(message.customerPhone),
+                        fontWeight = FontWeight.Bold,
+                    )
                     Text(message.syncStatus.name, color = if (message.syncStatus.name == "SYNCHRONISED") brand else accent)
                 }
                 Text(message.parsedTransactionType ?: "Awaiting parser")

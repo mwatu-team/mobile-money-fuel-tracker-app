@@ -22,7 +22,7 @@ class GatewayApplication : Application() {
             applicationContext,
             GatewayDatabase::class.java,
             "mobile_money_fuel_tracker_gateway.db",
-        ).build()
+        ).addMigrations(GatewayDatabase.MIGRATION_1_2).build()
         settingsRepository = GatewaySettingsRepository(applicationContext)
         queueRepository = SmsQueueRepository(applicationContext, database.smsMessageDao())
         queueRepository.enqueueSync()

@@ -42,4 +42,29 @@ class SmsMessageDaoTest {
             .isEqualTo("Original fictional body")
         assertThat(dao.observePendingCount().first()).isEqualTo(1)
     }
+
+    @Test
+    fun parsedCustomerNameIsStoredForReceiptsWithoutPhoneNumbers() = runTest {
+        val id = dao.insert(
+            LocalSmsMessage(
+                sender = "FICTIONAL-MOMO",
+                originalBody = "Original fictional body",
+                receivedAtEpochMillis = 1234L,
+                bodyHash = "name-hash",
+            ),
+        )
+
+        dao.updateParsing(
+            id = id,
+            parserVersion = "momo-receipt-v4",
+            transactionType = "CUSTOMER_PAYMENT",
+            externalId = "42670000001",
+            amount = "690000",
+            customerName = "ALICE SAMPLE",
+            customerPhone = null,
+            parseError = null,
+        )
+
+        assertThat(dao.observeAll().first().single().customerName).isEqualTo("ALICE SAMPLE")
+    }
 }

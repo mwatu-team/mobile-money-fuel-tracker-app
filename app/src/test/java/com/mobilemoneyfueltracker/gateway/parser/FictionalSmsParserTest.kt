@@ -18,6 +18,11 @@ private data class ParserFixture(
     val successful: Boolean,
     @SerialName("transaction_id") val transactionId: String? = null,
     val amount: String? = null,
+    @SerialName("customer_name") val customerName: String? = null,
+    @SerialName("customer_phone") val customerPhone: String? = null,
+    @SerialName("payment_message") val paymentMessage: String? = null,
+    @SerialName("till_number") val tillNumber: String? = null,
+    @SerialName("transaction_time") val transactionTime: String? = null,
 )
 
 class FictionalSmsParserTest {
@@ -41,6 +46,13 @@ class FictionalSmsParserTest {
             fixture.transactionId?.let {
                 assertThat(result.externalTransactionId).isEqualTo(it)
                 assertThat(result.amount).isEqualTo(BigDecimal(fixture.amount!!))
+            }
+            fixture.customerName?.let {
+                assertThat(result.customerName).isEqualTo(it)
+                assertThat(result.customerPhone).isEqualTo(fixture.customerPhone)
+                assertThat(result.paymentMessage).isEqualTo(fixture.paymentMessage)
+                assertThat(result.tillNumber).isEqualTo(fixture.tillNumber)
+                assertThat(result.transactionTime).isEqualTo(Instant.parse(fixture.transactionTime))
             }
         }
     }

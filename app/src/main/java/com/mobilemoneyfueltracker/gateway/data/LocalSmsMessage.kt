@@ -20,6 +20,7 @@ data class LocalSmsMessage(
     val parsedTransactionType: String? = null,
     val externalTransactionId: String? = null,
     val parsedAmount: String? = null,
+    val customerName: String? = null,
     val customerPhone: String? = null,
     val parseError: String? = null,
     val syncStatus: LocalSyncStatus = LocalSyncStatus.PENDING,

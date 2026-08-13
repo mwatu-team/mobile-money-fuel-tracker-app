@@ -26,7 +26,8 @@ interface SmsMessageDao {
     @Query(
         """UPDATE sms_messages SET parserVersion = :parserVersion,
             parsedTransactionType = :transactionType, externalTransactionId = :externalId,
-            parsedAmount = :amount, customerPhone = :customerPhone, parseError = :parseError
+            parsedAmount = :amount, customerName = :customerName,
+            customerPhone = :customerPhone, parseError = :parseError
             WHERE id = :id""",
     )
     suspend fun updateParsing(
@@ -35,6 +36,7 @@ interface SmsMessageDao {
         transactionType: String,
         externalId: String?,
         amount: String?,
+        customerName: String?,
         customerPhone: String?,
         parseError: String?,
     )

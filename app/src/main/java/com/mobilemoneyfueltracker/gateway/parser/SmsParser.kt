@@ -3,7 +3,7 @@ package com.mobilemoneyfueltracker.gateway.parser
 import java.math.BigDecimal
 import java.time.Instant
 
-const val PARSER_VERSION = "fictional-merchant-v1"
+const val PARSER_VERSION = "momo-receipt-v4"
 
 enum class ParsedTransactionType { CUSTOMER_PAYMENT, REVERSAL, UNKNOWN }
 
@@ -19,6 +19,8 @@ data class ParsingResult(
     val currency: String = "UGX",
     val customerName: String? = null,
     val customerPhone: String? = null,
+    val paymentMessage: String? = null,
+    val tillNumber: String? = null,
     val transactionTime: Instant? = null,
     val error: String? = null,
 )

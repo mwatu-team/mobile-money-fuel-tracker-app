@@ -31,6 +31,7 @@ class SmsSyncWorker(
                 transactionType = parsed.transactionType.name,
                 externalId = parsed.externalTransactionId,
                 amount = parsed.amount?.toPlainString(),
+                customerName = parsed.customerName,
                 customerPhone = parsed.customerPhone,
                 parseError = parsed.error,
             )

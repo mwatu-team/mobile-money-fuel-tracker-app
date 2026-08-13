@@ -8,31 +8,38 @@ import java.time.format.DateTimeFormatter
 
 class FictionalSmsParser(private val stationZone: ZoneId = ZoneId.of("Africa/Kampala")) : SmsParser {
     private val payment = Regex(
-        """^You\s+have\s+received\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+from\s+(.+?)\s+((?:\+?256|0)\d{9})\.\s*Transaction\s+ID:\s*([A-Z0-9-]+)\.\s*Date:\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2})\.?$""",
+        """^You\s+have\s+received\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+from\s+(.+?)\s+at\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\.\s*Fee:\s*([\d,]+(?:\.\d{1,2})?)\.\s*Message:\s*(.*?)\s*Till:\s*(\d+)\.\s*New\s+balance\s+is:\s*([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\.\s*Transaction\s+ID:\s*([A-Z0-9-]+)\.(?:\s*Download\s+MoMo\s+App\s+\S+\s+to\s+get\s+[^.]+\.)?$""",
         RegexOption.IGNORE_CASE,
     )
     private val reversal = Regex(
         """^Payment\s+([A-Z0-9-]+)\s+of\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+has\s+been\s+reversed\.?$""",
         RegexOption.IGNORE_CASE,
     )
-    private val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     override fun parse(sender: String, body: String, receivedAt: Instant): ParsingResult {
         val normalized = body.trim().split(Regex("\\s+")).joinToString(" ")
         payment.matchEntire(normalized)?.let { match ->
             return runCatching {
+                val currency = match.groupValues[1].uppercase()
+                require(match.groupValues[8].uppercase() == currency) {
+                    "Payment and balance currencies do not match"
+                }
+                BigDecimal(match.groupValues[5].replace(",", ""))
+                BigDecimal(match.groupValues[9].replace(",", ""))
                 ParsingResult(
                     originalSender = sender,
                     originalBody = body,
                     receivedAt = receivedAt,
                     transactionType = ParsedTransactionType.CUSTOMER_PAYMENT,
                     successful = true,
-                    currency = match.groupValues[1].uppercase(),
+                    currency = currency,
                     amount = BigDecimal(match.groupValues[2].replace(",", "")),
                     customerName = match.groupValues[3].trim(),
-                    customerPhone = match.groupValues[4],
-                    externalTransactionId = match.groupValues[5].uppercase(),
-                    transactionTime = LocalDateTime.parse(match.groupValues[6], dateFormat)
+                    paymentMessage = match.groupValues[6].trim().ifBlank { null },
+                    tillNumber = match.groupValues[7],
+                    externalTransactionId = match.groupValues[10].uppercase(),
+                    transactionTime = LocalDateTime.parse(match.groupValues[4], dateFormat)
                         .atZone(stationZone).toInstant(),
                 )
             }.getOrElse { unknown(sender, body, receivedAt, "Invalid amount or date") }
