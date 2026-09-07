@@ -43,7 +43,7 @@ class SmsQueueRepository(
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             SmsSyncWorker.UNIQUE_WORK_NAME,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            ExistingWorkPolicy.REPLACE,
             request,
         )
     }

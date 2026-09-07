@@ -16,10 +16,13 @@ class IncomingSmsReceiver : BroadcastReceiver() {
         val parts = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (parts.isEmpty()) return
         val sender = parts.first().originatingAddress ?: "UNKNOWN_SENDER"
+        val app = context.applicationContext as GatewayApplication
+        if (!TrustedSenderMatcher.isAllowed(sender, app.settingsRepository.settings.value.trustedSenders)) {
+            return
+        }
         val originalBody = parts.joinToString(separator = "") { it.messageBody.orEmpty() }
         val receivedAt = parts.maxOf { it.timestampMillis }
         val pendingResult = goAsync()
-        val app = context.applicationContext as GatewayApplication
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 // The receiver only performs a lossless local insert. Parsing and networking are delegated.

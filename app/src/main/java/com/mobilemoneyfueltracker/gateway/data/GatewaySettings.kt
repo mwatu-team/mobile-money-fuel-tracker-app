@@ -2,6 +2,7 @@ package com.mobilemoneyfueltracker.gateway.data
 
 import android.content.Context
 import android.provider.Settings
+import com.mobilemoneyfueltracker.gateway.sms.TrustedSenderMatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +12,7 @@ data class GatewaySettings(
     val stationId: String = "",
     val deviceIdentifier: String = "",
     val developmentDeviceToken: String = "",
+    val trustedSenders: Set<String> = emptySet(),
     val parserDebugMode: Boolean = false,
     val lastSuccessfulSyncEpochMillis: Long? = null,
 )
@@ -28,6 +30,10 @@ class GatewaySettingsRepository(context: Context) {
             .putString("station_id", value.stationId.trim())
             .putString("device_identifier", value.deviceIdentifier.trim())
             .putString("development_device_token", value.developmentDeviceToken)
+            .putStringSet(
+                "trusted_senders",
+                TrustedSenderMatcher.normalizeEntries(value.trustedSenders),
+            )
             .putBoolean("parser_debug", value.parserDebugMode)
             .apply()
         mutable.value = read()
@@ -43,6 +49,7 @@ class GatewaySettingsRepository(context: Context) {
         stationId = preferences.getString("station_id", "")!!,
         deviceIdentifier = preferences.getString("device_identifier", defaultDeviceId)!!,
         developmentDeviceToken = preferences.getString("development_device_token", "")!!,
+        trustedSenders = preferences.getStringSet("trusted_senders", emptySet())!!.toSet(),
         parserDebugMode = preferences.getBoolean("parser_debug", false),
         lastSuccessfulSyncEpochMillis = preferences.getLong("last_successful_sync", -1).takeIf { it >= 0 },
     )
