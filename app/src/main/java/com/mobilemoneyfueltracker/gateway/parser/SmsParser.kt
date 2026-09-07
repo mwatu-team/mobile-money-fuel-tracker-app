@@ -3,7 +3,7 @@ package com.mobilemoneyfueltracker.gateway.parser
 import java.math.BigDecimal
 import java.time.Instant
 
-const val PARSER_VERSION = "momo-receipt-v4"
+const val PARSER_VERSION = "momo-receipt-v5"
 
 enum class ParsedTransactionType { CUSTOMER_PAYMENT, REVERSAL, UNKNOWN }
 
