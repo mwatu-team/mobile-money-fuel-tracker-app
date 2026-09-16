@@ -1,0 +1,12 @@
+# Copy relevant lines into local.properties (gitignored; Android Studio also writes
+# sdk.dir there). Do not commit local.properties.
+
+# sdk.dir=/path/to/Android/sdk
+
+# Baked into the APK at build time as BuildConfig defaults, so a downloaded MVP
+# pilot build works without anyone typing these into Settings by hand. They remain
+# editable in-app afterward. Leave unset for local emulator development, where the
+# existing 10.0.2.2 / manual-entry defaults still apply.
+# gatewayBackendBaseUrl=https://your-api-domain.up.railway.app/
+# gatewayDeviceToken=replace-with-the-MMFT_GATEWAY_DEVICE_TOKEN-value-set-on-the-api-service
+# gatewayDeviceIdentifier=demo-gateway-001

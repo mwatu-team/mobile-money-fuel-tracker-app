@@ -1,9 +1,20 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+}
+
+// Deployment-specific defaults (backend URL, pilot device credentials) are read from
+// local.properties, which is gitignored, so real tokens never land in git history.
+// Missing keys fall back to the existing emulator-friendly defaults.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(FileInputStream(file))
 }
 
 android {
@@ -17,6 +28,22 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "DEFAULT_BACKEND_BASE_URL",
+            "\"${localProperties.getProperty("gatewayBackendBaseUrl", "http://10.0.2.2:8000/")}\"",
+        )
+        buildConfigField(
+            "String",
+            "DEFAULT_GATEWAY_DEVICE_TOKEN",
+            "\"${localProperties.getProperty("gatewayDeviceToken", "")}\"",
+        )
+        buildConfigField(
+            "String",
+            "DEFAULT_GATEWAY_DEVICE_IDENTIFIER",
+            "\"${localProperties.getProperty("gatewayDeviceIdentifier", "")}\"",
+        )
     }
 
     buildFeatures {
