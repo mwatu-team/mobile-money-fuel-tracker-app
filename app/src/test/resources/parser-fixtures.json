@@ -1,0 +1,104 @@
+[
+  {
+    "name": "valid receipt matching handset format",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have received UGX 690000 from ALICE SAMPLE at 2026-08-10 17:20:25. Fee: 0. Message: Till:33220001. New balance is: UGX 890000.\nTransaction ID: 42670000001. Download MoMo App https://example.test/momo to get 500MBs.",
+    "received_at": "2026-08-10T17:20:30+03:00",
+    "expected_type": "CUSTOMER_PAYMENT",
+    "successful": true,
+    "transaction_id": "42670000001",
+    "amount": "690000",
+    "customer_name": "ALICE SAMPLE",
+    "customer_phone": null,
+    "payment_message": null,
+    "till_number": "33220001",
+    "transaction_time": "2026-08-10T14:20:25Z"
+  },
+  {
+    "name": "valid receipt with formatted amounts",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have received UGX 75,000 from JANE TEST at 2026-08-10 15:05:09. Fee: 0. Message: Pump 4 Till:33220002. New balance is: UGX 1,250,000. Transaction ID: 42670000002. Download MoMo App https://example.test/momo to get 500MBs.",
+    "received_at": "2026-08-10T15:05:10+03:00",
+    "expected_type": "CUSTOMER_PAYMENT",
+    "successful": true,
+    "transaction_id": "42670000002",
+    "amount": "75000",
+    "customer_name": "JANE TEST",
+    "customer_phone": null,
+    "payment_message": "Pump 4",
+    "till_number": "33220002",
+    "transaction_time": "2026-08-10T12:05:09Z"
+  },
+  {
+    "name": "valid receipt with phone reason and short id label",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have received UGX 1000 from JOHN SAMPLE, 256700000000 on 2026-08-10 17:13:28. fee:0. Reason: 1. New balance: UGX 9022. ID: 43030000002. Download MoMo App https://example.test/momo to get 500MBs.",
+    "received_at": "2026-08-10T17:13:30+03:00",
+    "expected_type": "CUSTOMER_PAYMENT",
+    "successful": true,
+    "transaction_id": "43030000002",
+    "amount": "1000",
+    "customer_name": "JOHN SAMPLE",
+    "customer_phone": "256700000000",
+    "payment_message": "1",
+    "till_number": null,
+    "transaction_time": "2026-08-10T14:13:28Z"
+  },
+  {
+    "name": "reversal",
+    "sender": "FICTIONAL-MOMO",
+    "body": "Payment 42670000001 of UGX 690,000 has been reversed.",
+    "received_at": "2026-08-10T17:40:00+03:00",
+    "expected_type": "REVERSAL",
+    "successful": true,
+    "transaction_id": "42670000001",
+    "amount": "690000"
+  },
+  {
+    "name": "unknown",
+    "sender": "FICTIONAL-MOMO",
+    "body": "Your fictional account balance is UGX 500,000.",
+    "received_at": "2026-08-10T16:00:00+03:00",
+    "expected_type": "UNKNOWN",
+    "successful": false
+  },
+  {
+    "name": "missing transaction id",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have received UGX 20,000 from TEST PERSON at 2026-08-10 16:05:00. Fee: 0. Message: Till:33220003. New balance is: UGX 520,000.",
+    "received_at": "2026-08-10T16:05:05+03:00",
+    "expected_type": "UNKNOWN",
+    "successful": false
+  },
+  {
+    "name": "extra whitespace and multipart joined receipt",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have  received UGX 30,000 from MULTI PART at 2026-08-10 16:10:00. Fee: 0. Message: Till: 33220004.\nNew balance is: UGX 550,000.\nTransaction ID: 42670000004. Download MoMo App https://example.test/momo to get 500MBs.",
+    "received_at": "2026-08-10T16:10:05+03:00",
+    "expected_type": "CUSTOMER_PAYMENT",
+    "successful": true,
+    "transaction_id": "42670000004",
+    "amount": "30000",
+    "customer_name": "MULTI PART",
+    "customer_phone": null,
+    "payment_message": null,
+    "till_number": "33220004",
+    "transaction_time": "2026-08-10T13:10:00Z"
+  },
+  {
+    "name": "mismatched balance currency",
+    "sender": "FICTIONAL-MOMO",
+    "body": "You have received UGX 10,000 from TEST PERSON at 2026-08-10 16:15:00. Fee: 0. Message: Till:33220005. New balance is: USD 10. Transaction ID: 42670000005. Download MoMo App https://example.test/momo to get 500MBs.",
+    "received_at": "2026-08-10T16:15:05+03:00",
+    "expected_type": "UNKNOWN",
+    "successful": false
+  },
+  {
+    "name": "unexpected wording",
+    "sender": "FICTIONAL-MOMO",
+    "body": "Cash in UGX 10,000, reference ODD123, was successful.",
+    "received_at": "2026-08-10T16:20:00+03:00",
+    "expected_type": "UNKNOWN",
+    "successful": false
+  }
+]

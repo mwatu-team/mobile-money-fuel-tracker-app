@@ -1,0 +1,31 @@
+name: Android Gateway Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test assembleDebug
+
+  fixtures-drift:
+    # The API repository owns parser-fixtures.json. This copy must match it.
+    # Needs the API_REPO_READ_TOKEN secret (read-only access to the API repository).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: smujuzi/mobile-money-fuel-tracker-railway
+          token: ${{ secrets.API_REPO_READ_TOKEN }}
+          path: api-repo
+          sparse-checkout: sample-data/sms
+      - run: diff api-repo/sample-data/sms/parser-fixtures.json app/src/test/resources/parser-fixtures.json
