@@ -1,6 +1,6 @@
 # Mobile Money Fuel Tracker: Android Gateway
 
-PumpSync Gateway is the Android app that captures merchant mobile-money notification SMS from trusted senders, queues them offline in Room, and syncs them to the Mobile Money Fuel Tracker API. The API and station dashboard live in the separate `mobile-money-fuel-tracker-railway` repository.
+PumpSync Gateway is the Android app that captures merchant mobile-money notification SMS from trusted senders, queues them offline in Room, and syncs them to the Mobile Money Fuel Tracker API. The API and station dashboard live in the separate `mobile-money-fuel-tracker-dashboard` repository.
 
 PumpSync is not an official MTN product, approved integration, or partnership. The app verifies notification evidence; it does not initiate payments. All included messages, people, and numbers are fictional.
 
@@ -32,6 +32,43 @@ Emulator test:
 adb emu sms send 256770000000 "You have received UGX 100,000 from JOHN DOE at 2026-08-10 17:20:25. Fee: 0. Message: Till:33220001. New balance is: UGX 500,000. Transaction ID: EMUTEST001. Download MoMo App https://example.test/momo to get 500MBs."
 ```
 
+## Physical phone and local backend
+
+For a physical phone, connect it by USB, accept its debugging prompt, and create an ADB reverse
+tunnel:
+
+```bash
+adb devices -l
+adb reverse tcp:8000 tcp:8000
+adb reverse --list
+```
+
+The reverse list must include `tcp:8000 tcp:8000`. Set the app's backend URL to
+`http://localhost:8000/` and save. Each developer runs the same commands against their own connected
+device and local backend; no developer-specific IP address belongs in the project configuration.
+Recreate the reverse tunnel after disconnecting/reconnecting the phone, rebooting it, or restarting
+the ADB server.
+
+The development station ID is displayed/configurable for future device provisioning but the backend derives station scope from the authenticated gateway device.
+
+The trusted-sender list controls which incoming SMS messages PumpSync captures. It accepts
+equivalent Ugandan `07…`, `256…`, and `+256…` phone formats and case-insensitive alphanumeric IDs.
+When the list is empty, new SMS messages are ignored by PumpSync but remain in the phone's normal
+Messages app. Contact selection uses the system picker without broad contacts permission. Sender
+filtering is not proof of payment or sender authenticity and must not be presented as such.
+
+## Emulator SMS testing
+
+With the emulator running and PumpSync Gateway installed, grant the runtime permission and use:
+
+```bash
+adb emu sms send 256770000000 "You have received UGX 100,000 from JOHN DOE at 2026-08-10 17:20:25. Fee: 0. Message: Till:33220001. New balance is: UGX 500,000. Transaction ID: EMUTEST001. Download MoMo App https://example.test/momo to get 500MBs."
+```
+
+Use a date/time close to a waiting expected payment to receive a suggestion. The receiver writes the exact joined SMS body to Room, then WorkManager parses and uploads it. The **Messages** screen displays the parsed payer name (or a masked phone for legacy formats) and queue status. Original previews and parser errors are shown only when the build is debug and **Parser debug mode** is enabled.
+
+To exercise multipart handling, send a long fictional body from the emulator console or use two emulator SMS commands only if the emulator tooling actually delivers them as one multipart PDU; two independent SMS deliveries are correctly stored as two messages.
+
 ## Parser fixtures
 
-The Kotlin parser must agree with the backend's Python parser. `app/src/test/resources/parser-fixtures.json` is a copy of the file owned by the API repository (`sample-data/sms/parser-fixtures.json`). Update it there first, then copy it here. The `fixtures-drift` CI job fails if the two differ and needs an `API_REPO_READ_TOKEN` repository secret with read access to the API repository.
+The Kotlin parser must agree with the backend's Python parser. `app/src/test/resources/parser-fixtures.json` is a copy of the file owned by the API repository (`mwatu-team/mobile-money-fuel-tracker-dashboard`, `sample-data/sms/parser-fixtures.json`). Update it there first, then copy it here. The `fixtures-drift` CI job fails if the two differ and needs an `API_REPO_READ_TOKEN` repository secret with read access to that repository.

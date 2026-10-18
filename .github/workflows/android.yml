@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: smujuzi/mobile-money-fuel-tracker-railway
+          repository: mwatu-team/mobile-money-fuel-tracker-dashboard
           token: ${{ secrets.API_REPO_READ_TOKEN }}
           path: api-repo
           sparse-checkout: sample-data/sms
