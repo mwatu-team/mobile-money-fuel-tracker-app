@@ -12,7 +12,7 @@ PumpSync is only the customer-facing display name. Use `mobile-money-fuel-tracke
 
 ## Parser fixtures
 
-`app/src/test/resources/parser-fixtures.json` is a copy. The API repository owns the canonical file. Change it there first, copy it here, and keep both parsers passing. CI fails if the copies differ.
+`app/src/test/resources/parser-fixtures.json` is this repository's own fixture file, run by `FictionalSmsParserTest`. The backend repository keeps a file of the same shape and tests it independently. Nothing in CI links the two, so when parser behaviour changes, update the fixtures and tests in both repositories and keep the fixture structure identical.
 
 ## Security restrictions
 

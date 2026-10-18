@@ -71,4 +71,4 @@ To exercise multipart handling, send a long fictional body from the emulator con
 
 ## Parser fixtures
 
-The Kotlin parser must agree with the backend's Python parser. `app/src/test/resources/parser-fixtures.json` is a copy of the file owned by the API repository (`mwatu-team/mobile-money-fuel-tracker-dashboard`, `sample-data/sms/parser-fixtures.json`). Update it there first, then copy it here. The `fixtures-drift` CI job fails if the two differ and needs an `API_REPO_READ_TOKEN` repository secret with read access to that repository.
+The Kotlin parser must agree with the backend's Python parser. `app/src/test/resources/parser-fixtures.json` is this repository's own set of SMS parser fixtures, and the `FictionalSmsParserTest` suite runs every case in it. The backend repository (`mobile-money-fuel-tracker-dashboard`) keeps its own file of the same shape and tests it the same way. The two repositories are not linked by CI, so when parser behaviour changes, update the fixtures and tests in both. Keep the fixture structure (field names and types) identical across them.
