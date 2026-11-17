@@ -16,7 +16,7 @@ class SmsSyncWorker(
         val app = applicationContext as GatewayApplication
         val dao = app.database.smsMessageDao()
         val settings = app.settingsRepository.settings.value
-        if (settings.developmentDeviceToken.isBlank() || settings.deviceIdentifier.isBlank()) {
+        if (settings.deviceToken.isBlank() || settings.deviceIdentifier.isBlank()) {
             return Result.failure()
         }
         val api = runCatching { GatewayApiFactory.create(settings.backendBaseUrl) }
@@ -37,7 +37,7 @@ class SmsSyncWorker(
             )
             runCatching {
                 api.uploadSms(
-                    authorization = "Bearer ${settings.developmentDeviceToken}",
+                    authorization = "Bearer ${settings.deviceToken}",
                     request = SmsUploadRequest(
                         deviceIdentifier = settings.deviceIdentifier,
                         sender = message.sender,

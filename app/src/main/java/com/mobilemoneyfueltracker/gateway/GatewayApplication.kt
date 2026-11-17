@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.mobilemoneyfueltracker.gateway.data.GatewayDatabase
 import com.mobilemoneyfueltracker.gateway.data.GatewaySettingsRepository
 import com.mobilemoneyfueltracker.gateway.data.SmsQueueRepository
+import com.mobilemoneyfueltracker.gateway.pairing.PairingRepository
 import com.mobilemoneyfueltracker.gateway.parser.FictionalSmsParser
 
 class GatewayApplication : Application() {
@@ -13,6 +14,8 @@ class GatewayApplication : Application() {
     lateinit var settingsRepository: GatewaySettingsRepository
         private set
     lateinit var queueRepository: SmsQueueRepository
+        private set
+    lateinit var pairingRepository: PairingRepository
         private set
     val smsParser = FictionalSmsParser()
 
@@ -25,6 +28,10 @@ class GatewayApplication : Application() {
         ).addMigrations(GatewayDatabase.MIGRATION_1_2).build()
         settingsRepository = GatewaySettingsRepository(applicationContext)
         queueRepository = SmsQueueRepository(applicationContext, database.smsMessageDao())
+        pairingRepository = PairingRepository(
+            backendBaseUrl = { settingsRepository.settings.value.backendBaseUrl },
+            savePairing = settingsRepository::savePairing,
+        )
         queueRepository.enqueueSync()
     }
 }

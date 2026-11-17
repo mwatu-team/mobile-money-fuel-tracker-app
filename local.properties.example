@@ -3,10 +3,17 @@
 
 # sdk.dir=/path/to/Android/sdk
 
-# Baked into the APK at build time as BuildConfig defaults, so a downloaded MVP
-# pilot build works without anyone typing these into Settings by hand. They remain
-# editable in-app afterward. Leave unset for local emulator development, where the
-# existing 10.0.2.2 / manual-entry defaults still apply.
+# DEBUG builds only: baked in as BuildConfig defaults so a development build works without
+# typing these into Settings by hand. Leave unset for emulator development, where the
+# 10.0.2.2 / manual-entry defaults apply. RELEASE builds ignore all three: they use
+# config/production.properties and are paired with a one-time code instead.
 # gatewayBackendBaseUrl=https://your-api-domain.up.railway.app/
 # gatewayDeviceToken=replace-with-the-MMFT_GATEWAY_DEVICE_TOKEN-value-set-on-the-api-service
 # gatewayDeviceIdentifier=demo-gateway-001
+
+# Release signing (only needed to build a signed release locally; CI uses MMFT_UPLOAD_* secrets).
+# The same names as environment variables take precedence. Never commit the keystore.
+# uploadKeystoreFile=C:/path/to/upload-keystore.jks
+# uploadKeystorePassword=
+# uploadKeyAlias=upload
+# uploadKeyPassword=

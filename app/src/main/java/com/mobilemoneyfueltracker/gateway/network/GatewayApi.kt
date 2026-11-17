@@ -22,7 +22,23 @@ data class SmsUploadResponse(
     @SerialName("requires_review") val requiresReview: Boolean,
 )
 
+@Serializable
+data class EnrollRequest(
+    @SerialName("pairing_code") val pairingCode: String,
+)
+
+@Serializable
+data class EnrollResponse(
+    @SerialName("device_identifier") val deviceIdentifier: String,
+    @SerialName("device_token") val deviceToken: String,
+    @SerialName("station_name") val stationName: String,
+)
+
 interface GatewayApi {
+    /** Exchanges a one-time pairing code from the dashboard for this phone's device token. */
+    @POST("api/v1/gateway/enroll")
+    suspend fun enroll(@Body request: EnrollRequest): EnrollResponse
+
     @POST("api/v1/gateway/sms")
     suspend fun uploadSms(
         @Header("Authorization") authorization: String,

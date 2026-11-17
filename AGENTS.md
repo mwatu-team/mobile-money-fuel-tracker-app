@@ -4,7 +4,7 @@
 
 PumpSync Gateway, the Android SMS-capture app for the Mobile Money Fuel Tracker system. Kotlin, Compose, Room, WorkManager, Retrofit, and Android/JUnit tests. The API and dashboard live in the separate `mobile-money-fuel-tracker-dashboard` repository.
 
-Command: `./gradlew test` (JDK 17 and Android SDK 35). Kotlin official style.
+Command: `./gradlew test` (JDK 17 and Android SDK 36). Kotlin official style.
 
 ## Naming
 

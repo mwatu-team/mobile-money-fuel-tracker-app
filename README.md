@@ -4,11 +4,11 @@ PumpSync Gateway is the Android app that captures merchant mobile-money notifica
 
 PumpSync is not an official MTN product, approved integration, or partnership. The app verifies notification evidence; it does not initiate payments. All included messages, people, and numbers are fictional.
 
-> Prototype: development token authentication and local token storage are not production-ready.
+> Release builds pair each phone with a one-time code and store the device token encrypted (Android Keystore). Debug builds still accept a manually entered development token. Production hosting (custom domain, production sign-in) is not set up yet; releases currently point at the staging API in `config/production.properties`.
 
 ## Build and test
 
-Requires JDK 17 and Android SDK 35. Open the project in Android Studio, or:
+Requires JDK 17 and Android SDK 36. Open the project in Android Studio, or:
 
 ```bash
 ./gradlew test
@@ -16,9 +16,11 @@ Requires JDK 17 and Android SDK 35. Open the project in Android Studio, or:
 ./gradlew connectedAndroidTest   # emulator/device
 ```
 
-Copy the relevant lines from `local.properties.example` into `local.properties` (gitignored) to bake in the backend URL, device token, and device identifier for a pilot build.
+Copy the relevant lines from `local.properties.example` into `local.properties` (gitignored) to bake the backend URL, device token and device identifier into **debug** builds. Release builds never read them.
 
-## First launch
+## First launch (debug build)
+
+Release builds are set up differently; see [Releasing to Google Play](#releasing-to-google-play).
 
 1. Allow SMS reception.
 2. Open **Settings** and set the backend URL (`http://10.0.2.2:8000/` for the Android Emulator).
@@ -72,3 +74,52 @@ To exercise multipart handling, send a long fictional body from the emulator con
 ## Parser fixtures
 
 The Kotlin parser must agree with the backend's Python parser. `app/src/test/resources/parser-fixtures.json` is this repository's own set of SMS parser fixtures, and the `FictionalSmsParserTest` suite runs every case in it. The backend repository (`mobile-money-fuel-tracker-dashboard`) keeps its own file of the same shape and tests it the same way. The two repositories are not linked by CI, so when parser behaviour changes, update the fixtures and tests in both. Keep the fixture structure (field names and types) identical across them.
+
+## Releasing to Google Play
+
+Release builds differ from debug builds on purpose:
+
+- The backend URL comes from `config/production.properties` (override with `MMFT_RELEASE_BACKEND_URL`). The build fails unless it is an `https://` URL ending in `/`, and release network config allows no cleartext at all.
+- No device token or identifier is compiled in. The phone is paired at runtime: an administrator generates a one-time code under **Gateways** on the dashboard, and the user enters it on the app's Status screen. Pairing codes last 15 minutes and work once.
+- R8 and resource shrinking are on (`app/proguard-rules.pro`). The Settings screen hides the manual URL/token fields.
+
+Bump `versionCode` in `app/build.gradle.kts` for every upload; Play rejects a repeated code.
+
+### One-time signing setup
+
+Create an upload key and keep a backup somewhere safe and private (losing it means a Play support request):
+
+```bash
+keytool -genkeypair -v -keystore upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Enrol in Play App Signing in Play Console and upload with this key. Never commit the keystore.
+
+### Build a bundle locally
+
+Set these environment variables (or the matching `uploadKeystore*` / `uploadKey*` lines in `local.properties`):
+
+```bash
+export MMFT_UPLOAD_KEYSTORE_FILE=/path/to/upload-keystore.jks
+export MMFT_UPLOAD_KEYSTORE_PASSWORD=...
+export MMFT_UPLOAD_KEY_ALIAS=upload
+export MMFT_UPLOAD_KEY_PASSWORD=...
+./gradlew bundleRelease     # app/build/outputs/bundle/release/app-release.aab
+```
+
+Without them the bundle is built unsigned, which is fine for checking the build but cannot be uploaded.
+
+### Build in CI
+
+Pushes to `main` and `v*` tags run the `release` job in `.github/workflows/android.yml`, which uploads `app-release.aab` as a workflow artifact. Add these repository secrets first:
+
+| Secret | Value |
+|---|---|
+| `MMFT_UPLOAD_KEYSTORE_BASE64` | `base64 -w0 upload-keystore.jks` |
+| `MMFT_UPLOAD_KEYSTORE_PASSWORD` | keystore password |
+| `MMFT_UPLOAD_KEY_ALIAS` | key alias, for example `upload` |
+| `MMFT_UPLOAD_KEY_PASSWORD` | key password |
+
+### Reviewer access
+
+Google reviewers need a working backend and a way to produce a message. The setup and the fictional test SMS are documented in the dashboard repo's `docs/play-review.md`. The public privacy policy is served by the dashboard at `/privacy.html` and is linked from the app's SMS disclosure.
