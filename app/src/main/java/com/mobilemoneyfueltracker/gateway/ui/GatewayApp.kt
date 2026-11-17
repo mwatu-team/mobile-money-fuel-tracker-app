@@ -46,6 +46,7 @@ import com.mobilemoneyfueltracker.gateway.BuildConfig
 import com.mobilemoneyfueltracker.gateway.GatewayApplication
 import com.mobilemoneyfueltracker.gateway.data.GatewaySettings
 import com.mobilemoneyfueltracker.gateway.data.LocalSmsMessage
+import com.mobilemoneyfueltracker.gateway.pairing.PairingResult
 import com.mobilemoneyfueltracker.gateway.sms.TrustedSenderMatcher
 import java.text.DateFormat
 import java.util.Date
@@ -57,8 +58,9 @@ private val accent = Color(0xFFE9B44C)
 @Composable
 fun GatewayApp(
     application: GatewayApplication,
-    smsPermissionGranted: Boolean,
+    smsPermission: SmsPermissionState,
     requestSmsPermission: () -> Unit,
+    openAppSettings: () -> Unit,
 ) {
     var screen by remember { mutableStateOf(GatewayScreen.STATUS) }
     val messages by application.queueRepository.messages.collectAsState(initial = emptyList())
@@ -88,7 +90,16 @@ fun GatewayApp(
         ) { padding ->
             Box(Modifier.padding(padding).fillMaxSize()) {
                 when (screen) {
-                    GatewayScreen.STATUS -> StatusScreen(settings, pendingCount, lastReceivedAt, smsPermissionGranted, requestSmsPermission)
+                    GatewayScreen.STATUS -> StatusScreen(
+                        settings = settings,
+                        pendingCount = pendingCount,
+                        lastReceivedAt = lastReceivedAt,
+                        smsPermission = smsPermission,
+                        requestPermission = requestSmsPermission,
+                        openAppSettings = openAppSettings,
+                        onPair = application.pairingRepository::pair,
+                        onPaired = { application.queueRepository.enqueueSync() },
+                    )
                     GatewayScreen.MESSAGES -> MessagesScreen(messages, settings.parserDebugMode)
                     GatewayScreen.SETTINGS -> SettingsScreen(settings) {
                         application.settingsRepository.update(it)
@@ -105,19 +116,18 @@ private fun StatusScreen(
     settings: GatewaySettings,
     pendingCount: Int,
     lastReceivedAt: Long?,
-    permissionGranted: Boolean,
+    smsPermission: SmsPermissionState,
     requestPermission: () -> Unit,
+    openAppSettings: () -> Unit,
+    onPair: suspend (String) -> PairingResult,
+    onPaired: () -> Unit,
 ) {
     val context = LocalContext.current
     val connected = remember { hasNetwork(context) }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Gateway status", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
-        if (!permissionGranted) item {
-            Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-                Text("SMS access is required to capture incoming merchant notifications.")
-                Spacer(Modifier.height(8.dp)); Button(onClick = requestPermission) { Text("Allow SMS reception") }
-            } }
-        }
+        item { PairingCard(settings.isPaired, settings.stationName, onPair, onPaired) }
+        item { SmsPermissionCard(smsPermission, requestPermission, openAppSettings) }
         item { StatusCard("Device ID", settings.deviceIdentifier.ifBlank { "Not configured" }) }
         item { StatusCard("Trusted SMS senders", settings.trustedSenders.size.toString()) }
         if (settings.trustedSenders.isEmpty()) item {
@@ -193,10 +203,14 @@ private fun SettingsScreen(initial: GatewaySettings, onSave: (GatewaySettings) -
     LaunchedEffect(initial) { edited = initial }
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Text("Settings", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
-        item { OutlinedTextField(edited.backendBaseUrl, { edited = edited.copy(backendBaseUrl = it) }, Modifier.fillMaxWidth(), label = { Text("Backend base URL") }) }
-        item { OutlinedTextField(edited.stationId, { edited = edited.copy(stationId = it) }, Modifier.fillMaxWidth(), label = { Text("Development station ID") }) }
-        item { OutlinedTextField(edited.deviceIdentifier, { edited = edited.copy(deviceIdentifier = it) }, Modifier.fillMaxWidth(), label = { Text("Device ID") }) }
-        item { OutlinedTextField(edited.developmentDeviceToken, { edited = edited.copy(developmentDeviceToken = it) }, Modifier.fillMaxWidth(), label = { Text("Development device token") }, visualTransformation = PasswordVisualTransformation()) }
+        // Raw backend, identifier and token fields exist only in debug builds. Release phones are
+        // paired with a one-time code (Status screen) and the backend URL is fixed at build time.
+        if (BuildConfig.DEBUG) {
+            item { OutlinedTextField(edited.backendBaseUrl, { edited = edited.copy(backendBaseUrl = it) }, Modifier.fillMaxWidth(), label = { Text("Backend base URL") }) }
+            item { OutlinedTextField(edited.stationId, { edited = edited.copy(stationId = it) }, Modifier.fillMaxWidth(), label = { Text("Development station ID") }) }
+            item { OutlinedTextField(edited.deviceIdentifier, { edited = edited.copy(deviceIdentifier = it) }, Modifier.fillMaxWidth(), label = { Text("Device ID") }) }
+            item { OutlinedTextField(edited.deviceToken, { edited = edited.copy(deviceToken = it) }, Modifier.fillMaxWidth(), label = { Text("Development device token") }, visualTransformation = PasswordVisualTransformation()) }
+        }
         item {
             Text(
                 "Trusted SMS senders",
@@ -271,9 +285,25 @@ private fun SettingsScreen(initial: GatewaySettings, onSave: (GatewaySettings) -
             )
         }
         item { Row { Checkbox(edited.parserDebugMode, { edited = edited.copy(parserDebugMode = it) }); Text("Parser debug mode", Modifier.padding(top = 12.dp)) } }
-        item { Button(onClick = { runCatching { onSave(edited) }.onSuccess { message = "Settings saved; queued messages will retry." }.onFailure { message = "Enter an HTTP or HTTPS backend URL." } }) { Text("Save settings") } }
+        item {
+            Button(
+                onClick = {
+                    runCatching { onSave(edited) }
+                        .onSuccess { message = "Settings saved; queued messages will retry." }
+                        .onFailure { error ->
+                            message = if (error is IllegalArgumentException) {
+                                error.message ?: "Enter a valid backend URL."
+                            } else {
+                                "Settings could not be saved securely. Try again."
+                            }
+                        }
+                },
+            ) { Text("Save settings") }
+        }
         message?.let { value -> item { Text(value) } }
-        item { Text("Development credentials only. Production device authentication must replace this mechanism.", color = Color.Gray) }
+        if (BuildConfig.DEBUG) {
+            item { Text("Development build: manual credentials are for testing only. Release builds pair with a code.", color = Color.Gray) }
+        }
     }
 }
 
